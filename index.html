@@ -27,54 +27,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Estilo para o overlay do modal de resumo */
-        .summary-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8); /* Fundo mais escuro para o modal */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .summary-modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .summary-modal-content {
-            background-color: white;
-            padding: 2.5rem; /* Um pouco mais de padding */
-            border-radius: 1rem; /* Cantos mais arredondados */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1); /* Sombra mais pronunciada */
-            width: 90%;
-            max-width: 700px; /* Modal um pouco mais largo */
-            max-height: 85vh; /* Limita a altura do modal */
-            overflow-y: auto; /* Adiciona scroll se o conteúdo for muito longo */
-            position: relative;
-            transform: translateY(20px); /* Pequena animação de entrada */
-            transition: transform 0.3s ease-out;
-        }
-        .summary-modal-overlay.active .summary-modal-content {
-            transform: translateY(0);
-        }
         /* Efeito de destaque ao passar o mouse nos cards de notícia */
         .news-card-hover:hover {
             box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.08);
             transform: translateY(-5px); /* Efeito de "levantar" */
-        }
-
-        /* Estilos para o dropdown de categorias (agora controlado por JS) */
-        .dropdown-content {
-            display: none; /* Inicia oculto */
-        }
-        .dropdown-content.show {
-            display: block; /* Mostra quando a classe 'show' é adicionada */
         }
     </style>
 </head>
@@ -89,27 +45,11 @@
                 <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="hover:text-blue-400 transition-colors duration-200">Echo of End</a>
             </div>
 
-            <!-- Menu de Navegação -->
+            <!-- Menu de Navegação - Simplificado -->
             <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
                 <!-- Link para a URL do GitHub Pages do projeto -->
                 <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200">Home</a>
-                
-                <!-- Dropdown de Categorias -->
-                <div class="relative">
-                    <button id="category-dropdown-btn" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200 focus:outline-none flex items-center">
-                        Categorias <span class="ml-1 text-sm">&#9660;</span>
-                    </button>
-                    <!-- Conteúdo do dropdown agora com classe controlada por JS -->
-                    <div id="category-dropdown-content" class="absolute dropdown-content bg-gray-700 text-white rounded-md shadow-lg py-2 mt-2 md:mt-4 z-20 w-48">
-                        <!-- Links de Categoria com data-category para filtrar -->
-                        <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="geopolítica">Geopolítica</a>
-                        <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="economia global">Economia Global</a>
-                        <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="conflitos e paz">Conflitos e Paz</a>
-                        <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="ciência e tecnologia">Ciência e Tecnologia</a>
-                        <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="meio ambiente">Meio Ambiente</a>
-                        <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="cultura mundial">Cultura Mundial</a>
-                    </div>
-                </div>
+                <!-- Categorias removidas daqui -->
             </div>
 
             <!-- Botões de Redes Sociais -->
@@ -136,8 +76,8 @@
             <p class="text-lg text-gray-700 font-medium">As notícias mais relevantes do mundo, direto para você.</p>
         </header>
 
-        <!-- Novo título dinâmico para categorias -->
-        <h2 id="current-category-heading" class="text-3xl font-bold text-gray-800 text-center mb-8 hidden"></h2>
+        <!-- Título para Notícias Mundiais (agora fixo) -->
+        <h2 id="current-category-heading" class="text-3xl font-bold text-gray-800 text-center mb-8">Últimas Notícias Mundiais</h2>
 
         <!-- Seção de Busca de Notícias -->
         <div class="flex flex-col sm:flex-row gap-5 mb-10 justify-center">
@@ -164,27 +104,10 @@
         </div>
     </div>
 
-    <!-- Modal para Exibir o Resumo da Notícia -->
-    <div id="summary-modal-overlay" class="summary-modal-overlay hidden">
-        <div class="summary-modal-content">
-            <button id="close-modal-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-3xl font-bold rounded-full p-2 leading-none transition-colors duration-200">&times;</button>
-            <h2 class="text-3xl font-bold text-gray-800 mb-5 border-b-2 pb-2 border-purple-200">Resumo da Notícia ✨IA</h2>
-            <p id="summary-text" class="text-gray-700 leading-relaxed text-lg"></p>
-            <div id="summary-loading-indicator" class="text-center mt-6 hidden">
-                <div class="spinner inline-block"></div>
-                <p class="text-blue-600 mt-3 text-lg font-medium">Gerando resumo com Inteligência Artificial...</p>
-            </div>
-        </div>
-    </div>
+    <!-- Modal de Resumo com IA removido -->
 
     <script>
-        // --- ATENÇÃO: CHAVE API GEMINI ---
-        // Se você estiver rodando este arquivo HTML diretamente do seu computador ou no GitHub Pages,
-        // a chave API para a Gemini NÃO é fornecida automaticamente como no ambiente Canvas.
-        // VOCÊ PRECISA INSERIR SUA PRÓPRIA CHAVE API GEMINI AQUI PARA A FUNÇÃO DE RESUMO FUNCIONAR.
-        // Você pode obter uma chave em: https://makersuite.google.com/app/apikey
-        // A CHAVE FOI AGORA CORRETAMENTE ATRIBUÍDA COMO VALOR DA VARIÁVEL.
-        const YOUR_GEMINI_API_KEY = "AIzaSyBRogJPMTJG07m3Esl_zgMQRclNxvGTyIM"; 
+        // Chave API Gemini e funções de resumo com IA removidas
 
         // Função para buscar notícias do seu backend Flask
         async function fetchNews(query) {
@@ -198,7 +121,6 @@
             try {
                 const response = await fetch(backendUrl);
                 if (!response.ok) {
-                    // Tenta ler a mensagem de erro do backend (se houver)
                     const errorData = await response.json();
                     throw new Error(`Erro HTTP! Status: ${response.status} - ${errorData.error || response.statusText}`);
                 }
@@ -207,33 +129,24 @@
 
                 // Verifica se há notícias e as exibe na tela
                 if (data && data.length > 0) {
-                    displayNews(data, query); // Passa a query para displayNews para atualizar o título da categoria
+                    displayNews(data);
                     document.getElementById('message-area').textContent = ''; // Limpa a mensagem de carregamento
                 } else {
                     document.getElementById('message-area').textContent = 'Nenhuma notícia encontrada para sua busca. Tente uma busca diferente.';
-                    document.getElementById('current-category-heading').classList.add('hidden'); // Oculta o título da categoria se não houver resultados
                 }
             } catch (error) {
                 console.error('Erro ao buscar notícias (Backend):', error);
-                // Exibe uma mensagem de erro útil para o usuário
                 document.getElementById('message-area').textContent = `Erro ao carregar notícias: ${error.message}. Por favor, verifique se o backend está ativo no Render e se não há problemas de rede.`;
-                document.getElementById('current-category-heading').classList.add('hidden'); // Oculta o título da categoria em caso de erro
             }
         }
 
-        // Função para exibir as notícias no DOM (interface do usuário) e atualizar o título da categoria
-        function displayNews(articles, currentQuery) {
+        // Função para exibir as notícias no DOM (interface do usuário)
+        function displayNews(articles) {
             const newsResultsDiv = document.getElementById('news-results');
             newsResultsDiv.innerHTML = ''; // Limpa o conteúdo anterior para novas notícias
 
-            const categoryHeading = document.getElementById('current-category-heading');
-            if (currentQuery === 'notícias mundiais' || !currentQuery) {
-                categoryHeading.textContent = 'Últimas Notícias Mundiais';
-            } else {
-                // Capitaliza a primeira letra da query para o título da categoria
-                categoryHeading.textContent = `Notícias sobre: ${currentQuery.charAt(0).toUpperCase() + currentQuery.slice(1)}`;
-            }
-            categoryHeading.classList.remove('hidden'); // Mostra o título da categoria
+            // O título da categoria agora é fixo
+            document.getElementById('current-category-heading').textContent = 'Resultados da Pesquisa'; 
 
             articles.forEach(article => {
                 const newsCard = document.createElement('div');
@@ -254,110 +167,14 @@
                         <span class="text-gray-700 font-semibold">${article.source}</span>
                         <span>${article.date}</span>
                     </div>
-                    <button class="summarize-button mt-5 w-full bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 transition-all duration-300 shadow-md transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300" data-snippet="${encodeURIComponent(article.snippet || article.title)}">Resumir com ✨IA</button>
                 `;
+                // Botão de resumo com IA removido
                 newsResultsDiv.appendChild(newsCard); // Adiciona o card ao container de resultados
             });
-
-            // Adiciona event listeners para os botões de resumo APÓS todos os cards serem criados no DOM
-            document.querySelectorAll('.summarize-button').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const snippet = decodeURIComponent(event.target.dataset.snippet);
-                    console.log('Botão Resumir clicado para:', snippet); // Log para depuração
-                    summarizeArticle(snippet); // Chama a função de resumo ao clicar no botão
-                });
-            });
+            // Event listeners do botão de resumo com IA removidos
         }
 
-        // Função para mostrar o modal de resumo da notícia
-        function showSummaryModal(summaryText) {
-            document.getElementById('summary-text').textContent = summaryText; // Define o texto do resumo
-            document.getElementById('summary-loading-indicator').classList.add('hidden'); // Esconde o indicador de carregamento
-            document.getElementById('summary-modal-overlay').classList.add('active'); // Ativa a visibilidade do modal
-        }
-
-        // Função para esconder o modal de resumo
-        function hideSummaryModal() {
-            document.getElementById('summary-modal-overlay').classList.remove('active'); // Desativa a visibilidade do modal
-            document.getElementById('summary-text').textContent = ''; // Limpa o texto do resumo
-            document.getElementById('summary-loading-indicator').classList.add('hidden'); // Garante que o loader esteja escondido
-        }
-
-        // Função para resumir o artigo usando a API Gemini (Google AI)
-        async function summarizeArticle(snippet) {
-            showSummaryModal(''); // Abre o modal vazio, pronto para receber o resumo
-            document.getElementById('summary-loading-indicator').classList.remove('hidden'); // Mostra o indicador de carregamento
-            document.getElementById('summary-text').textContent = ''; // Limpa qualquer texto anterior no resumo
-
-            let chatHistory = [];
-            // O prompt enviado para a IA, pedindo um resumo conciso (até 3 frases)
-            const prompt = `Resuma o seguinte texto de notícia de forma concisa e clara (máximo de 3 frases): "${snippet}"`;
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: chatHistory };
-
-            // A chave API para Gemini é fornecida automaticamente pelo ambiente Canvas do Google.
-            // FORA DO CANVAS: Você DEVE inserir sua própria chave API Gemini em YOUR_GEMINI_API_KEY.
-            // A chave já está corretamente atribuída à variável YOUR_GEMINI_API_KEY.
-            const apiUrlGemini = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${YOUR_GEMINI_API_KEY}`;
-
-            console.log('Iniciando resumo com Gemini API...'); // Log para depuração
-            console.log('Chave API Gemini em uso (primeiros 5 caracteres):', YOUR_GEMINI_API_KEY ? YOUR_GEMINI_API_KEY.substring(0, 5) + '...' : 'Não definida');
-
-            if (!YOUR_GEMINI_API_KEY) {
-                showSummaryModal("Erro: Chave API Gemini não configurada. Por favor, insira sua chave em YOUR_GEMINI_API_KEY no código (linha ~216).");
-                console.error("Erro: Chave API Gemini não configurada. O resumo não pode ser gerado.");
-                return; // Impede a chamada da API se a chave não estiver configurada
-            }
-
-            try {
-                // Faz a requisição para a API Gemini
-                const response = await fetch(apiUrlGemini, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) {
-                    const errorResponse = await response.json();
-                    console.error('Resposta de erro detalhada da API Gemini:', errorResponse); // Log detalhado do erro da API
-                    throw new Error(`Erro na API Gemini: ${errorResponse.error.message || response.statusText} (Código: ${response.status}). Verifique sua chave API e permissões.`);
-                }
-
-                const result = await response.json(); // Converte a resposta em JSON
-                console.log('Resposta da API Gemini:', result); // Log para depuração
-
-                // Verifica se a resposta da IA contém o resumo esperado
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const summary = result.candidates[0].content.parts[0].text;
-                    showSummaryModal(summary); // Exibe o resumo no modal
-                } else {
-                    showSummaryModal('Não foi possível gerar um resumo. Resposta da IA inesperada ou vazia.');
-                    console.error('Estrutura de resposta da Gemini API inesperada:', result);
-                }
-            } catch (error) {
-                console.error('Erro ao chamar a API Gemini:', error);
-                showSummaryModal(`Erro ao gerar resumo: ${error.message}. Verifique a console para detalhes. Pode ser problema de chave API, CORS ou rede.`); // Exibe mensagem de erro no modal
-            }
-        }
-
-        // --- Adicionando interatividade ao dropdown de categorias ---
-        const categoryDropdownBtn = document.getElementById('category-dropdown-btn');
-        const categoryDropdownContent = document.getElementById('category-dropdown-content');
-
-        // Alterna a visibilidade do dropdown ao clicar no botão "Categorias"
-        categoryDropdownBtn.addEventListener('click', (event) => {
-            event.preventDefault(); // Impede o comportamento padrão do botão
-            categoryDropdownContent.classList.toggle('show'); // Alterna a classe 'show'
-        });
-
-        // Fecha o dropdown se o usuário clicar fora dele
-        document.addEventListener('click', (event) => {
-            if (!categoryDropdownBtn.contains(event.target) && !categoryDropdownContent.contains(event.target)) {
-                categoryDropdownContent.classList.remove('show'); // Remove a classe 'show'
-            }
-        });
+        // Funções do modal de resumo com IA removidas
 
         // Adiciona um event listener ao botão de busca para iniciar a pesquisa
         document.getElementById('search-button').addEventListener('click', () => {
@@ -367,7 +184,7 @@
             } else {
                 document.getElementById('message-area').textContent = 'Por favor, digite algo para pesquisar.';
                 document.getElementById('news-results').innerHTML = ''; // Limpa os resultados se a busca for vazia
-                document.getElementById('current-category-heading').classList.add('hidden'); // Esconde o título da categoria
+                document.getElementById('current-category-heading').textContent = 'Últimas Notícias Mundiais'; // Restaura o título padrão
             }
         });
 
@@ -378,27 +195,10 @@
             }
         });
 
-        // Adiciona event listener para fechar o modal de resumo ao clicar no botão 'x'
-        document.getElementById('close-modal-button').addEventListener('click', hideSummaryModal);
+        // Event listeners de fechar modal de resumo removidos
 
-        // Fecha o modal ao clicar na área escura (overlay) fora do conteúdo do modal
-        document.getElementById('summary-modal-overlay').addEventListener('click', (event) => {
-            if (event.target.id === 'summary-modal-overlay') { // Verifica se o clique foi no overlay, não no conteúdo
-                hideSummaryModal();
-            }
-        });
-
-        // Adiciona event listeners para os links de categoria
-        document.querySelectorAll('.category-link').forEach(link => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault(); // Previne o comportamento padrão do link (ir para #)
-                const category = event.target.dataset.category; // Pega o valor do data-category
-                document.getElementById('search-input').value = category; // Preenche a barra de busca
-                console.log('Categoria clicada:', category); // Log para depuração
-                fetchNews(category); // Realiza a busca pela categoria
-                categoryDropdownContent.classList.remove('show'); // Fecha o dropdown após a seleção da categoria
-            });
-        });
+        // Remove os event listeners de categoria, pois o menu foi removido.
+        // Se as categorias fossem reintroduzidas, esses listeners precisariam ser reativados.
 
         // Carrega notícias iniciais (ex: "notícias mundiais") assim que a página é carregada
         window.onload = () => {
