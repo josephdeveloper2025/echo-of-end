@@ -69,12 +69,12 @@
             transform: translateY(-5px); /* Efeito de "levantar" */
         }
 
-        /* Estilos para o dropdown de categorias */
-        .group .group-hover\:block {
-            display: none;
+        /* Estilos para o dropdown de categorias (agora controlado por JS) */
+        .dropdown-content {
+            display: none; /* Inicia oculto */
         }
-        .group:hover .group-hover\:block {
-            display: block;
+        .dropdown-content.show {
+            display: block; /* Mostra quando a classe 'show' é adicionada */
         }
     </style>
 </head>
@@ -95,11 +95,12 @@
                 <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200">Home</a>
                 
                 <!-- Dropdown de Categorias -->
-                <div class="relative group">
-                    <button class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200 focus:outline-none flex items-center">
+                <div class="relative">
+                    <button id="category-dropdown-btn" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200 focus:outline-none flex items-center">
                         Categorias <span class="ml-1 text-sm">&#9660;</span>
                     </button>
-                    <div class="absolute hidden group-hover:block bg-gray-700 text-white rounded-md shadow-lg py-2 mt-2 md:mt-4 z-20 w-48">
+                    <!-- Conteúdo do dropdown agora com classe controlada por JS -->
+                    <div id="category-dropdown-content" class="absolute dropdown-content bg-gray-700 text-white rounded-md shadow-lg py-2 mt-2 md:mt-4 z-20 w-48">
                         <!-- Links de Categoria com data-category para filtrar -->
                         <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="geopolítica">Geopolítica</a>
                         <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="economia global">Economia Global</a>
@@ -129,12 +130,14 @@
         </div>
     </nav>
 
-    <!-- Container Principal da Aplicação (ajustado o padding-top) -->
+    <!-- Container Principal da Aplicação -->
     <div class="bg-white rounded-xl shadow-2xl p-8 md:p-12 w-full max-w-screen-xl mx-auto mt-10">
         <header class="text-center mb-10">
-            <!-- Removido o cabeçalho H1 daqui, pois já está na navegação -->
             <p class="text-lg text-gray-700 font-medium">As notícias mais relevantes do mundo, direto para você.</p>
         </header>
+
+        <!-- Novo título dinâmico para categorias -->
+        <h2 id="current-category-heading" class="text-3xl font-bold text-gray-800 text-center mb-8 hidden"></h2>
 
         <!-- Seção de Busca de Notícias -->
         <div class="flex flex-col sm:flex-row gap-5 mb-10 justify-center">
@@ -204,22 +207,33 @@
 
                 // Verifica se há notícias e as exibe na tela
                 if (data && data.length > 0) {
-                    displayNews(data);
+                    displayNews(data, query); // Passa a query para displayNews para atualizar o título da categoria
                     document.getElementById('message-area').textContent = ''; // Limpa a mensagem de carregamento
                 } else {
                     document.getElementById('message-area').textContent = 'Nenhuma notícia encontrada para sua busca. Tente uma busca diferente.';
+                    document.getElementById('current-category-heading').classList.add('hidden'); // Oculta o título da categoria se não houver resultados
                 }
             } catch (error) {
                 console.error('Erro ao buscar notícias (Backend):', error);
                 // Exibe uma mensagem de erro útil para o usuário
                 document.getElementById('message-area').textContent = `Erro ao carregar notícias: ${error.message}. Por favor, verifique se o backend está ativo no Render e se não há problemas de rede.`;
+                document.getElementById('current-category-heading').classList.add('hidden'); // Oculta o título da categoria em caso de erro
             }
         }
 
-        // Função para exibir as notícias no DOM (interface do usuário)
-        function displayNews(articles) {
+        // Função para exibir as notícias no DOM (interface do usuário) e atualizar o título da categoria
+        function displayNews(articles, currentQuery) {
             const newsResultsDiv = document.getElementById('news-results');
             newsResultsDiv.innerHTML = ''; // Limpa o conteúdo anterior para novas notícias
+
+            const categoryHeading = document.getElementById('current-category-heading');
+            if (currentQuery === 'notícias mundiais' || !currentQuery) {
+                categoryHeading.textContent = 'Últimas Notícias Mundiais';
+            } else {
+                // Capitaliza a primeira letra da query para o título da categoria
+                categoryHeading.textContent = `Notícias sobre: ${currentQuery.charAt(0).toUpperCase() + currentQuery.slice(1)}`;
+            }
+            categoryHeading.classList.remove('hidden'); // Mostra o título da categoria
 
             articles.forEach(article => {
                 const newsCard = document.createElement('div');
@@ -290,7 +304,7 @@
             console.log('Chave API Gemini em uso (primeiros 5 caracteres):', YOUR_GEMINI_API_KEY ? YOUR_GEMINI_API_KEY.substring(0, 5) + '...' : 'Não definida');
 
             if (!YOUR_GEMINI_API_KEY) {
-                showSummaryModal("Erro: Chave API Gemini não configurada. Por favor, insira sua chave em YOUR_GEMINI_API_KEY no código (linha 216).");
+                showSummaryModal("Erro: Chave API Gemini não configurada. Por favor, insira sua chave em YOUR_GEMINI_API_KEY no código (linha ~216).");
                 console.error("Erro: Chave API Gemini não configurada. O resumo não pode ser gerado.");
                 return; // Impede a chamada da API se a chave não estiver configurada
             }
@@ -328,6 +342,23 @@
             }
         }
 
+        // --- Adicionando interatividade ao dropdown de categorias ---
+        const categoryDropdownBtn = document.getElementById('category-dropdown-btn');
+        const categoryDropdownContent = document.getElementById('category-dropdown-content');
+
+        // Alterna a visibilidade do dropdown ao clicar no botão "Categorias"
+        categoryDropdownBtn.addEventListener('click', (event) => {
+            event.preventDefault(); // Impede o comportamento padrão do botão
+            categoryDropdownContent.classList.toggle('show'); // Alterna a classe 'show'
+        });
+
+        // Fecha o dropdown se o usuário clicar fora dele
+        document.addEventListener('click', (event) => {
+            if (!categoryDropdownBtn.contains(event.target) && !categoryDropdownContent.contains(event.target)) {
+                categoryDropdownContent.classList.remove('show'); // Remove a classe 'show'
+            }
+        });
+
         // Adiciona um event listener ao botão de busca para iniciar a pesquisa
         document.getElementById('search-button').addEventListener('click', () => {
             const query = document.getElementById('search-input').value;
@@ -336,6 +367,7 @@
             } else {
                 document.getElementById('message-area').textContent = 'Por favor, digite algo para pesquisar.';
                 document.getElementById('news-results').innerHTML = ''; // Limpa os resultados se a busca for vazia
+                document.getElementById('current-category-heading').classList.add('hidden'); // Esconde o título da categoria
             }
         });
 
@@ -364,6 +396,7 @@
                 document.getElementById('search-input').value = category; // Preenche a barra de busca
                 console.log('Categoria clicada:', category); // Log para depuração
                 fetchNews(category); // Realiza a busca pela categoria
+                categoryDropdownContent.classList.remove('show'); // Fecha o dropdown após a seleção da categoria
             });
         });
 
