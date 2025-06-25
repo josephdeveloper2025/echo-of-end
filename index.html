@@ -120,7 +120,7 @@
         async function fetchNews(query) {
             // A URL agora aponta para o seu backend Flask, que está rodando localmente na porta 5000.
             // Se você hospedar seu backend em outro lugar, precisará alterar esta URL para o seu domínio.
-            const backendUrl = `http://localhost:5000/api/news?query=${encodeURIComponent(query)}`;
+            const backendUrl = `https://echo-of-end-backend.onrender.com/api/news?query=${encodeURIComponent(query)}`;
 
             // Exibe mensagem de carregamento na interface
             document.getElementById('message-area').textContent = 'Carregando notícias...';
