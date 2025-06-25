@@ -94,4 +94,4 @@ if __name__ == '__main__':
     # `host='0.0.0.0'`: Faz com que o servidor seja acessível de qualquer IP, não apenas do seu localhost.
     #                    Importante para cenários de deploy ou acesso de outras máquinas na mesma rede.
     # `port=5000`: Define a porta TCP/IP na qual o servidor irá escutar.
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000) # Mude debug para False
