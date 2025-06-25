@@ -85,12 +85,14 @@
             <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
                 <!-- Logo/Nome do Site -->
                 <div class="text-white text-3xl font-bold mb-4 md:mb-0">
-                    <a href="#" class="hover:text-blue-400 transition-colors duration-200">Echo of End</a>
+                    <!-- Link para a URL do GitHub Pages do projeto -->
+                    <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="hover:text-blue-400 transition-colors duration-200">Echo of End</a>
                 </div>
 
                 <!-- Menu de Navegação -->
                 <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
-                    <a href="#" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200">Home</a>
+                    <!-- Link para a URL do GitHub Pages do projeto -->
+                    <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200">Home</a>
                     
                     <!-- Dropdown de Categorias -->
                     <div class="relative group">
@@ -98,12 +100,13 @@
                             Categorias <span class="ml-1 text-sm">&#9660;</span>
                         </button>
                         <div class="absolute hidden group-hover:block bg-gray-700 text-white rounded-md shadow-lg py-2 mt-2 md:mt-4 z-20 w-48">
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150">Geopolítica</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150">Economia Global</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150">Conflitos e Paz</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150">Ciência e Tecnologia</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150">Meio Ambiente</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150">Cultura Mundial</a>
+                            <!-- Links de Categoria com data-category para filtrar -->
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="geopolítica">Geopolítica</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="economia global">Economia Global</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="conflitos e paz">Conflitos e Paz</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="ciência e tecnologia">Ciência e Tecnologia</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="meio ambiente">Meio Ambiente</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-600 transition-colors duration-150 category-link" data-category="cultura mundial">Cultura Mundial</a>
                         </div>
                     </div>
                 </div>
@@ -172,6 +175,13 @@
         </div>
 
         <script>
+            // --- ATENÇÃO: CHAVE API GEMINI ---
+            // Se você estiver rodando este arquivo HTML diretamente do seu computador ou no GitHub Pages,
+            // a chave API para a Gemini NÃO é fornecida automaticamente como no ambiente Canvas.
+            // VOCÊ PRECISA INSERIR SUA PRÓPRIA CHAVE API GEMINI AQUI PARA A FUNÇÃO DE RESUMO FUNCIONAR.
+            // Você pode obter uma chave em: https://makersuite.google.com/app/apikey
+            const YOUR_GEMINI_API_KEY = ""; // <--- INSIRA SUA CHAVE API GEMINI AQUI!
+
             // Função para buscar notícias do seu backend Flask
             async function fetchNews(query) {
                 // A URL agora aponta para o seu backend Flask no Render!
@@ -269,10 +279,15 @@
                 chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                 const payload = { contents: chatHistory };
 
-                // A chave API para Gemini é fornecida automaticamente pelo ambiente Canvas do Google,
-                // então ela é deixada como string vazia aqui no código do frontend.
-                const apiKeyGemini = "";
-                const apiUrlGemini = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyGemini}`;
+                // A chave API para Gemini é fornecida automaticamente pelo ambiente Canvas do Google.
+                // FORA DO CANVAS: Você DEVE inserir sua própria chave API Gemini em YOUR_GEMINI_API_KEY.
+                const apiUrlGemini = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${YOUR_GEMINI_API_KEY}`;
+
+                if (!YOUR_GEMINI_API_KEY) {
+                    showSummaryModal("Erro: Chave API Gemini não configurada. Por favor, insira sua chave em YOUR_GEMINI_API_KEY no código.");
+                    console.error("Erro: Chave API Gemini não configurada.");
+                    return;
+                }
 
                 try {
                     // Faz a requisição para a API Gemini
@@ -281,6 +296,12 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+                    
+                    if (!response.ok) {
+                        const errorResponse = await response.json();
+                        throw new Error(`Erro na API Gemini: ${errorResponse.error.message || response.statusText}`);
+                    }
+
                     const result = await response.json(); // Converte a resposta em JSON
 
                     // Verifica se a resposta da IA contém o resumo esperado
@@ -294,7 +315,7 @@
                     }
                 } catch (error) {
                     console.error('Erro ao chamar a API Gemini:', error);
-                    showSummaryModal(`Erro ao gerar resumo: ${error.message}.`); // Exibe mensagem de erro no modal
+                    showSummaryModal(`Erro ao gerar resumo: ${error.message}. Verifique a console para detalhes.`); // Exibe mensagem de erro no modal
                 }
             }
 
@@ -324,6 +345,16 @@
                 if (event.target.id === 'summary-modal-overlay') { // Verifica se o clique foi no overlay, não no conteúdo
                     hideSummaryModal();
                 }
+            });
+
+            // Adiciona event listeners para os links de categoria
+            document.querySelectorAll('.category-link').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault(); // Previne o comportamento padrão do link (ir para #)
+                    const category = event.target.dataset.category; // Pega o valor do data-category
+                    document.getElementById('search-input').value = category; // Preenche a barra de busca
+                    fetchNews(category); // Realiza a busca pela categoria
+                });
             });
 
             // Carrega notícias iniciais (ex: "notícias mundiais") assim que a página é carregada
