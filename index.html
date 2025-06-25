@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo of End - Notícias Mundiais</title>
+    <!-- Inclui Tailwind CSS para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Define a fonte Inter para todo o documento, para um visual mais limpo -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0; /* Um cinza claro suave para o fundo */
+        }
+        /* Estilos para o spinner de carregamento (melhor visual) */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #6366f1; /* Cor primária do site, roxo-azul */
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Estilo para o overlay do modal de resumo */
+        .summary-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); /* Fundo mais escuro para o modal */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .summary-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .summary-modal-content {
+            background-color: white;
+            padding: 2.5rem; /* Um pouco mais de padding */
+            border-radius: 1rem; /* Cantos mais arredondados */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1); /* Sombra mais pronunciada */
+            width: 90%;
+            max-width: 700px; /* Modal um pouco mais largo */
+            max-height: 85vh; /* Limita a altura do modal */
+            overflow-y: auto; /* Adiciona scroll se o conteúdo for muito longo */
+            position: relative;
+            transform: translateY(20px); /* Pequena animação de entrada */
+            transition: transform 0.3s ease-out;
+        }
+        .summary-modal-overlay.active .summary-modal-content {
+            transform: translateY(0);
+        }
+        /* Efeito de destaque ao passar o mouse nos cards de notícia */
+        .news-card-hover:hover {
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.08);
+            transform: translateY(-5px); /* Efeito de "levantar" */
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4 md:px-8">
+
+    <!-- Container Principal da Aplicação -->
+    <div class="bg-white rounded-xl shadow-2xl p-8 md:p-12 w-full max-w-screen-xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-3 leading-tight">Echo of End</h1>
+            <p class="text-lg text-gray-700 font-medium">Seu portal para as últimas notícias mundiais e análises concisas.</p>
+        </header>
+
+        <!-- Seção de Busca de Notícias -->
+        <div class="flex flex-col sm:flex-row gap-5 mb-10 justify-center">
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Pesquisar notícias (ex: Ucrânia, economia global, política)"
+                class="flex-grow p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-md text-lg transition-all duration-200"
+            />
+            <button
+                id="search-button"
+                class="bg-blue-700 text-white font-bold py-4 px-8 rounded-lg hover:bg-blue-800 transition-all duration-300 shadow-lg transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
+            >
+                Buscar Notícias
+            </button>
+        </div>
+
+        <!-- Área de Mensagens (Carregando, Erro, etc.) -->
+        <div id="message-area" class="text-center text-gray-700 text-xl font-semibold mb-6"></div>
+
+        <!-- Container para Exibir as Notícias -->
+        <div id="news-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- As notícias serão carregadas aqui dinamicamente -->
+        </div>
+    </div>
+
+    <!-- Modal para Exibir o Resumo da Notícia -->
+    <div id="summary-modal-overlay" class="summary-modal-overlay hidden">
+        <div class="summary-modal-content">
+            <button id="close-modal-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-3xl font-bold rounded-full p-2 leading-none transition-colors duration-200">&times;</button>
+            <h2 class="text-3xl font-bold text-gray-800 mb-5 border-b-2 pb-2 border-purple-200">Resumo da Notícia ✨IA</h2>
+            <p id="summary-text" class="text-gray-700 leading-relaxed text-lg"></p>
+            <div id="summary-loading-indicator" class="text-center mt-6 hidden">
+                <div class="spinner inline-block"></div>
+                <p class="text-blue-600 mt-3 text-lg font-medium">Gerando resumo com Inteligência Artificial...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para buscar notícias do seu backend Flask
+        async function fetchNews(query) {
+            // A URL agora aponta para o seu backend Flask, que está rodando localmente na porta 5000.
+            // Se você hospedar seu backend em outro lugar, precisará alterar esta URL para o seu domínio.
+            const backendUrl = `http://localhost:5000/api/news?query=${encodeURIComponent(query)}`;
+
+            // Exibe mensagem de carregamento na interface
+            document.getElementById('message-area').textContent = 'Carregando notícias...';
+            document.getElementById('news-results').innerHTML = ''; // Limpa resultados anteriores
+
+            try {
+                const response = await fetch(backendUrl);
+                if (!response.ok) {
+                    // Tenta ler a mensagem de erro do backend (se houver)
+                    const errorData = await response.json();
+                    throw new Error(`Erro HTTP! Status: ${response.status} - ${errorData.error || response.statusText}`);
+                }
+                const data = await response.json(); // Recebe a lista de notícias do backend
+                console.log('Dados do Backend:', data); // Log para depuração
+
+                // Verifica se há notícias e as exibe na tela
+                if (data && data.length > 0) {
+                    displayNews(data);
+                    document.getElementById('message-area').textContent = ''; // Limpa a mensagem de carregamento
+                } else {
+                    document.getElementById('message-area').textContent = 'Nenhuma notícia encontrada para sua busca. Tente uma busca diferente.';
+                }
+            } catch (error) {
+                console.error('Erro ao buscar notícias:', error);
+                // Exibe uma mensagem de erro útil para o usuário
+                document.getElementById('message-area').textContent = `Erro ao carregar notícias: ${error.message}. Por favor, verifique se o backend está rodando em http://localhost:5000.`;
+            }
+        }
+
+        // Função para exibir as notícias no DOM (interface do usuário)
+        function displayNews(articles) {
+            const newsResultsDiv = document.getElementById('news-results');
+            newsResultsDiv.innerHTML = ''; // Limpa o conteúdo anterior para novas notícias
+
+            articles.forEach(article => {
+                const newsCard = document.createElement('div');
+                // Aplica classes Tailwind CSS para estilização do card de notícia, com efeitos de hover
+                newsCard.className = 'bg-white rounded-xl shadow-lg p-6 border border-gray-100 flex flex-col justify-between news-card-hover transition-all duration-300';
+
+                // Determina a URL da imagem: usa a thumbnail do artigo ou um placeholder se não houver
+                const imageUrl = article.thumbnail || `https://placehold.co/600x400/eceff1/78909c?text=Sem+Imagem`;
+
+                // Constrói o HTML interno do card
+                newsCard.innerHTML = `
+                    <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="block">
+                        <img src="${imageUrl}" alt="${article.title}" class="rounded-lg mb-5 w-full h-48 object-cover border border-gray-200 shadow-sm" onerror="this.onerror=null;this.src='https://placehold.co/600x400/eceff1/78909c?text=Erro+ao+Carregar+Imagem';">
+                        <h2 class="text-xl font-bold text-gray-900 mb-3 leading-snug hover:text-blue-700 transition-colors duration-200">${article.title}</h2>
+                        <p class="text-base text-gray-600 mb-4 line-clamp-3">${article.snippet || 'Clique para ler mais sobre esta notícia.'}</p>
+                    </a>
+                    <div class="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500 font-medium">
+                        <span class="text-gray-700 font-semibold">${article.source}</span>
+                        <span>${article.date}</span>
+                    </div>
+                    <button class="summarize-button mt-5 w-full bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 transition-all duration-300 shadow-md transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300" data-snippet="${encodeURIComponent(article.snippet || article.title)}">Resumir com ✨IA</button>
+                `;
+                newsResultsDiv.appendChild(newsCard); // Adiciona o card ao container de resultados
+            });
+
+            // Adiciona event listeners para os botões de resumo APÓS todos os cards serem criados no DOM
+            document.querySelectorAll('.summarize-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const snippet = decodeURIComponent(event.target.dataset.snippet);
+                    summarizeArticle(snippet); // Chama a função de resumo ao clicar no botão
+                });
+            });
+        }
+
+        // Função para mostrar o modal de resumo da notícia
+        function showSummaryModal(summaryText) {
+            document.getElementById('summary-text').textContent = summaryText; // Define o texto do resumo
+            document.getElementById('summary-loading-indicator').classList.add('hidden'); // Esconde o indicador de carregamento
+            document.getElementById('summary-modal-overlay').classList.add('active'); // Ativa a visibilidade do modal
+        }
+
+        // Função para esconder o modal de resumo
+        function hideSummaryModal() {
+            document.getElementById('summary-modal-overlay').classList.remove('active'); // Desativa a visibilidade do modal
+            document.getElementById('summary-text').textContent = ''; // Limpa o texto do resumo
+            document.getElementById('summary-loading-indicator').classList.add('hidden'); // Garante que o loader esteja escondido
+        }
+
+        // Função para resumir o artigo usando a API Gemini (Google AI)
+        async function summarizeArticle(snippet) {
+            showSummaryModal(''); // Abre o modal vazio, pronto para receber o resumo
+            document.getElementById('summary-loading-indicator').classList.remove('hidden'); // Mostra o indicador de carregamento
+            document.getElementById('summary-text').textContent = ''; // Limpa qualquer texto anterior no resumo
+
+            let chatHistory = [];
+            // O prompt enviado para a IA, pedindo um resumo conciso (até 3 frases)
+            const prompt = `Resuma o seguinte texto de notícia de forma concisa e clara (máximo de 3 frases): "${snippet}"`;
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+
+            // A chave API para Gemini é fornecida automaticamente pelo ambiente Canvas do Google,
+            // então ela é deixada como string vazia aqui no código do frontend.
+            const apiKeyGemini = "";
+            const apiUrlGemini = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyGemini}`;
+
+            try {
+                // Faz a requisição para a API Gemini
+                const response = await fetch(apiUrlGemini, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json(); // Converte a resposta em JSON
+
+                // Verifica se a resposta da IA contém o resumo esperado
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const summary = result.candidates[0].content.parts[0].text;
+                    showSummaryModal(summary); // Exibe o resumo no modal
+                } else {
+                    showSummaryModal('Não foi possível gerar um resumo. Resposta da IA inesperada.');
+                }
+            } catch (error) {
+                console.error('Erro ao chamar a API Gemini:', error);
+                showSummaryModal(`Erro ao gerar resumo: ${error.message}.`); // Exibe mensagem de erro no modal
+            }
+        }
+
+        // Adiciona um event listener ao botão de busca para iniciar a pesquisa
+        document.getElementById('search-button').addEventListener('click', () => {
+            const query = document.getElementById('search-input').value;
+            if (query.trim() !== '') {
+                fetchNews(query); // Chama a função de busca se a query não estiver vazia
+            } else {
+                document.getElementById('message-area').textContent = 'Por favor, digite algo para pesquisar.';
+                document.getElementById('news-results').innerHTML = ''; // Limpa os resultados se a busca for vazia
+            }
+        });
+
+        // Opcional: Permite que a busca seja acionada pressionando Enter no campo de texto
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('search-button').click(); // Simula o clique no botão de busca
+            }
+        });
+
+        // Adiciona event listener para fechar o modal de resumo ao clicar no botão 'x'
+        document.getElementById('close-modal-button').addEventListener('click', hideSummaryModal);
+
+        // Fecha o modal ao clicar na área escura (overlay) fora do conteúdo do modal
+        document.getElementById('summary-modal-overlay').addEventListener('click', (event) => {
+            if (event.target.id === 'summary-modal-overlay') { // Verifica se o clique foi no overlay, não no conteúdo
+                hideSummaryModal();
+            }
+        });
+
+        // Carrega notícias iniciais (ex: "notícias mundiais") assim que a página é carregada
+        window.onload = () => {
+            fetchNews('notícias mundiais');
+        };
+    </script>
+</body>
+</html>
