@@ -1,209 +1,203 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo of End - Notícias Mundiais</title>
-    <!-- Inclui Tailwind CSS para estilização rápida e responsiva -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inclui Font Awesome para ícones de redes sociais -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Define a fonte Inter para todo o documento, para um visual mais limpo -->
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #e2e8f0; /* Um cinza claro suave para o fundo */
-        }
-        /* Estilos para o spinner de carregamento (melhor visual) */
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #6366f1; /* Cor primária do site, roxo-azul */
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Efeito de destaque ao passar o mouse nos cards de notícia */
-        .news-card-hover:hover {
-            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.08);
-            transform: translateY(-5px); /* Efeito de "levantar" */
-        }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col items-center">
-
-    <!-- Novo Cabeçalho Moderno -->
-    <nav class="bg-gray-800 p-4 shadow-xl rounded-b-xl w-full sticky top-0 z-50">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <!-- Logo/Nome do Site -->
-            <div class="text-white text-3xl font-bold mb-4 md:mb-0">
-                <!-- Link para a URL do GitHub Pages do projeto -->
-                <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="hover:text-blue-400 transition-colors duration-200">Echo of End</a>
-            </div>
-
-            <!-- Menu de Navegação - Simplificado -->
-            <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
-                <!-- Link para a URL do GitHub Pages do projeto -->
-                <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200">Home</a>
-                <!-- Categorias removidas daqui -->
-            </div>
-
-            <!-- Botões de Redes Sociais -->
-            <div class="flex space-x-5 mt-4 md:mt-0">
-                <a href="https://twitter.com/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">
-                    <i class="fab fa-twitter text-2xl"></i>
-                </a>
-                <a href="https://facebook.com/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-blue-600 transition-colors duration-200">
-                    <i class="fab fa-facebook text-2xl"></i>
-                </a>
-                <a href="https://instagram.com/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-pink-500 transition-colors duration-200">
-                    <i class="fab fa-instagram text-2xl"></i>
-                </a>
-                <a href="https://linkedin.com/company/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-blue-700 transition-colors duration-200">
-                    <i class="fab fa-linkedin text-2xl"></i>
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Container Principal da Aplicação -->
-    <div class="bg-white rounded-xl shadow-2xl p-8 md:p-12 w-full max-w-screen-xl mx-auto mt-10">
-        <header class="text-center mb-10">
-            <p class="text-lg text-gray-700 font-medium">As notícias mais relevantes do mundo, direto para você.</p>
-        </header>
-
-        <!-- Título para Notícias Mundiais (agora fixo) -->
-        <h2 id="current-category-heading" class="text-3xl font-bold text-gray-800 text-center mb-8">Últimas Notícias Mundiais</h2>
-
-        <!-- Seção de Busca de Notícias -->
-        <div class="flex flex-col sm:flex-row gap-5 mb-10 justify-center">
-            <input
-                type="text"
-                id="search-input"
-                placeholder="Pesquisar notícias (ex: Ucrânia, economia global, política)"
-                class="flex-grow p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-md text-lg transition-all duration-200"
-            />
-            <button
-                id="search-button"
-                class="bg-blue-700 text-white font-bold py-4 px-8 rounded-lg hover:bg-blue-800 transition-all duration-300 shadow-lg transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
-            >
-                Buscar Notícias
-            </button>
-        </div>
-
-        <!-- Área de Mensagens (Carregando, Erro, etc.) -->
-        <div id="message-area" class="text-center text-gray-700 text-xl font-semibold mb-6"></div>
-
-        <!-- Container para Exibir as Notícias -->
-        <div id="news-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- As notícias serão carregadas aqui dinamicamente -->
-        </div>
-    </div>
-
-    <!-- Modal de Resumo com IA removido -->
-
-    <script>
-        // Chave API Gemini e funções de resumo com IA removidas
-
-        // Função para buscar notícias do seu backend Flask
-        async function fetchNews(query) {
-            // A URL agora aponta para o seu backend Flask no Render!
-            const backendUrl = `https://echo-of-end-backend.onrender.com/api/news?query=${encodeURIComponent(query)}`;
-
-            // Exibe mensagem de carregamento na interface
-            document.getElementById('message-area').textContent = 'Carregando notícias...';
-            document.getElementById('news-results').innerHTML = ''; // Limpa resultados anteriores
-
-            try {
-                const response = await fetch(backendUrl);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Erro HTTP! Status: ${response.status} - ${errorData.error || response.statusText}`);
-                }
-                const data = await response.json(); // Recebe a lista de notícias do backend
-                console.log('Dados do Backend (SerpApi):', data); // Log para depuração
-
-                // Verifica se há notícias e as exibe na tela
-                if (data && data.length > 0) {
-                    displayNews(data);
-                    document.getElementById('message-area').textContent = ''; // Limpa a mensagem de carregamento
-                } else {
-                    document.getElementById('message-area').textContent = 'Nenhuma notícia encontrada para sua busca. Tente uma busca diferente.';
-                }
-            } catch (error) {
-                console.error('Erro ao buscar notícias (Backend):', error);
-                document.getElementById('message-area').textContent = `Erro ao carregar notícias: ${error.message}. Por favor, verifique se o backend está ativo no Render e se não há problemas de rede.`;
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Echo of End - Notícias Mundiais</title>
+        <!-- Inclui Tailwind CSS para estilização rápida e responsiva -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Inclui Font Awesome para ícones de redes sociais -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <!-- Define a fonte Inter para todo o documento, para um visual mais limpo -->
+        <style>
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #e2e8f0; /* Um cinza claro suave para o fundo */
             }
-        }
+            /* Estilos para o spinner de carregamento (melhor visual) */
+            .spinner {
+                border: 4px solid rgba(0, 0, 0, 0.1);
+                border-left-color: #6366f1; /* Cor primária do site, roxo-azul */
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            /* Efeito de destaque ao passar o mouse nos cards de notícia */
+            .news-card-hover:hover {
+                box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.08);
+                transform: translateY(-5px); /* Efeito de "levantar" */
+            }
+        </style>
+    </head>
+    <body class="min-h-screen flex flex-col items-center">
 
-        // Função para exibir as notícias no DOM (interface do usuário)
-        function displayNews(articles) {
-            const newsResultsDiv = document.getElementById('news-results');
-            newsResultsDiv.innerHTML = ''; // Limpa o conteúdo anterior para novas notícias
+        <!-- Novo Cabeçalho Moderno -->
+        <nav class="bg-gray-800 p-4 shadow-xl rounded-b-xl w-full sticky top-0 z-50">
+            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+                <!-- Logo/Nome do Site -->
+                <div class="text-white text-3xl font-bold mb-4 md:mb-0">
+                    <!-- Link para a URL do GitHub Pages do projeto -->
+                    <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="hover:text-blue-400 transition-colors duration-200">Echo of End</a>
+                </div>
 
-            // O título da categoria agora é fixo
-            document.getElementById('current-category-heading').textContent = 'Resultados da Pesquisa'; 
+                <!-- Menu de Navegação - Simplificado -->
+                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
+                    <!-- Link para a URL do GitHub Pages do projeto -->
+                    <a href="https://josephdeveloper2025.github.io/echo-of-end/" class="text-gray-300 hover:text-white text-lg font-semibold transition-colors duration-200">Home</a>
+                    <!-- Categorias removidas daqui -->
+                </div>
 
-            articles.forEach(article => {
-                const newsCard = document.createElement('div');
-                // Aplica classes Tailwind CSS para estilização do card de notícia, com efeitos de hover
-                newsCard.className = 'bg-white rounded-xl shadow-lg p-6 border border-gray-100 flex flex-col justify-between news-card-hover transition-all duration-300';
-
-                // Determina a URL da imagem: usa a thumbnail do artigo ou um placeholder se não houver
-                const imageUrl = article.thumbnail || `https://placehold.co/600x400/eceff1/78909c?text=Sem+Imagem`;
-
-                // Constrói o HTML interno do card
-                newsCard.innerHTML = `
-                    <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="block">
-                        <img src="${imageUrl}" alt="${article.title}" class="rounded-lg mb-5 w-full h-48 object-cover border border-gray-200 shadow-sm" onerror="this.onerror=null;this.src='https://placehold.co/600x400/eceff1/78909c?text=Erro+ao+Carregar+Imagem';">
-                        <h2 class="text-xl font-bold text-gray-900 mb-3 leading-snug hover:text-blue-700 transition-colors duration-200">${article.title}</h2>
-                        <p class="text-base text-gray-600 mb-4 line-clamp-3">${article.snippet || 'Clique para ler mais sobre esta notícia.'}</p>
+                <!-- Botões de Redes Sociais -->
+                <div class="flex space-x-5 mt-4 md:mt-0">
+                    <a href="https://twitter.com/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                        <i class="fab fa-twitter text-2xl"></i>
                     </a>
-                    <div class="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500 font-medium">
-                        <span class="text-gray-700 font-semibold">${article.source}</span>
-                        <span>${article.date}</span>
-                    </div>
-                `;
-                // Botão de resumo com IA removido
-                newsResultsDiv.appendChild(newsCard); // Adiciona o card ao container de resultados
+                    <a href="https://facebook.com/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-blue-600 transition-colors duration-200">
+                        <i class="fab fa-facebook text-2xl"></i>
+                    </a>
+                    <a href="https://instagram.com/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-pink-500 transition-colors duration-200">
+                        <i class="fab fa-instagram text-2xl"></i>
+                    </a>
+                    <a href="https://linkedin.com/company/echofend" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-blue-700 transition-colors duration-200">
+                        <i class="fab fa-linkedin text-2xl"></i>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Container Principal da Aplicação -->
+        <div class="bg-white rounded-xl shadow-2xl p-8 md:p-12 w-full max-w-screen-xl mx-auto mt-10">
+            <header class="text-center mb-10">
+                <p class="text-lg text-gray-700 font-medium">As notícias mais relevantes do mundo, direto para você.</p>
+            </header>
+
+            <!-- Título para Notícias Mundiais (agora fixo) -->
+            <h2 id="current-category-heading" class="text-3xl font-bold text-gray-800 text-center mb-8">Últimas Notícias Mundiais</h2>
+
+            <!-- Seção de Busca de Notícias -->
+            <div class="flex flex-col sm:flex-row gap-5 mb-10 justify-center">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Pesquisar notícias (ex: Ucrânia, economia global, política)"
+                    class="flex-grow p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-md text-lg transition-all duration-200"
+                />
+                <button
+                    id="search-button"
+                    class="bg-blue-700 text-white font-bold py-4 px-8 rounded-lg hover:bg-blue-800 transition-all duration-300 shadow-lg transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                >
+                    Buscar Notícias
+                </button>
+            </div>
+
+            <!-- Área de Mensagens (Carregando, Erro, etc.) -->
+            <div id="message-area" class="text-center text-gray-700 text-xl font-semibold mb-6"></div>
+
+            <!-- Container para Exibir as Notícias -->
+            <div id="news-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- As notícias serão carregadas aqui dinamicamente -->
+            </div>
+        </div>
+
+        <script>
+            // Funções de resumo com IA removidas
+
+            // Função para buscar notícias do seu backend Flask
+            async function fetchNews(query) {
+                // A URL agora aponta para o seu backend Flask no Render!
+                // Mantenha esta URL como está, ela chama o seu backend no Render.
+                const backendUrl = `https://echo-of-end-backend.onrender.com/api/news?query=${encodeURIComponent(query)}`;
+
+                // Exibe mensagem de carregamento na interface
+                document.getElementById('message-area').textContent = 'Carregando notícias...';
+                document.getElementById('news-results').innerHTML = ''; // Limpa resultados anteriores
+
+                try {
+                    const response = await fetch(backendUrl);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`Erro HTTP! Status: ${response.status} - ${errorData.error || response.statusText}`);
+                    }
+                    const data = await response.json(); // Recebe a lista de notícias do backend
+                    console.log('Dados do Backend (NewsAPI.ai via Flask):', data); // Log para depuração
+
+                    // Verifica se há notícias e as exibe na tela
+                    if (data && data.length > 0) {
+                        displayNews(data);
+                        document.getElementById('message-area').textContent = ''; // Limpa a mensagem de carregamento
+                    } else {
+                        document.getElementById('message-area').textContent = 'Nenhuma notícia encontrada para sua busca. Tente uma busca diferente.';
+                        document.getElementById('current-category-heading').textContent = 'Nenhum Resultado Encontrado'; // Ajusta o título
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar notícias (Backend):', error);
+                    document.getElementById('message-area').textContent = `Erro ao carregar notícias: ${error.message}. Por favor, verifique se o backend está ativo no Render e se não há problemas de rede.`;
+                }
+            }
+
+            // Função para exibir as notícias no DOM (interface do usuário)
+            function displayNews(articles) {
+                const newsResultsDiv = document.getElementById('news-results');
+                newsResultsDiv.innerHTML = ''; // Limpa o conteúdo anterior para novas notícias
+
+                // Atualiza o título dinamicamente com base na pesquisa
+                const currentSearchQuery = document.getElementById('search-input').value;
+                const headingElement = document.getElementById('current-category-heading');
+                if (currentSearchQuery.trim() === '' || currentSearchQuery === 'notícias mundiais') {
+                    headingElement.textContent = 'Últimas Notícias Mundiais';
+                } else {
+                    headingElement.textContent = `Resultados para: ${currentSearchQuery.charAt(0).toUpperCase() + currentSearchQuery.slice(1)}`;
+                }
+                headingElement.classList.remove('hidden'); // Garante que o título está visível
+
+
+                articles.forEach(article => {
+                    const newsCard = document.createElement('div');
+                    // Aplica classes Tailwind CSS para estilização do card de notícia, com efeitos de hover
+                    newsCard.className = 'bg-white rounded-xl shadow-lg p-6 border border-gray-100 flex flex-col justify-between news-card-hover transition-all duration-300';
+
+                    // Determina a URL da imagem: usa a thumbnail do artigo ou um placeholder se não houver
+                    const imageUrl = article.thumbnail || `https://placehold.co/600x400/eceff1/78909c?text=Sem+Imagem`;
+
+                    // Constrói o HTML interno do card
+                    newsCard.innerHTML = `
+                        <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="block">
+                            <img src="${imageUrl}" alt="${article.title}" class="rounded-lg mb-5 w-full h-48 object-cover border border-gray-200 shadow-sm" onerror="this.onerror=null;this.src='https://placehold.co/600x400/eceff1/78909c?text=Erro+ao+Carregar+Imagem';">
+                            <h2 class="text-xl font-bold text-gray-900 mb-3 leading-snug hover:text-blue-700 transition-colors duration-200">${article.title}</h2>
+                            <p class="text-base text-gray-600 mb-4 line-clamp-3">${article.snippet || 'Clique para ler mais sobre esta notícia.'}</p>
+                        </a>
+                        <div class="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500 font-medium">
+                            <span class="text-gray-700 font-semibold">${article.source}</span>
+                            <span>${article.date}</span>
+                        </div>
+                    `;
+                    newsResultsDiv.appendChild(newsCard); // Adiciona o card ao container de resultados
+                });
+            }
+
+            // Adiciona um event listener ao botão de busca para iniciar a pesquisa
+            document.getElementById('search-button').addEventListener('click', () => {
+                const query = document.getElementById('search-input').value;
+                fetchNews(query.trim() === '' ? 'notícias mundiais' : query); // Busca "notícias mundiais" se o campo estiver vazio
             });
-            // Event listeners do botão de resumo com IA removidos
-        }
 
-        // Funções do modal de resumo com IA removidas
+            // Opcional: Permite que a busca seja acionada pressionando Enter no campo de texto
+            document.getElementById('search-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('search-button').click(); // Simula o clique no botão de busca
+                }
+            });
 
-        // Adiciona um event listener ao botão de busca para iniciar a pesquisa
-        document.getElementById('search-button').addEventListener('click', () => {
-            const query = document.getElementById('search-input').value;
-            if (query.trim() !== '') {
-                fetchNews(query); // Chama a função de busca se a query não estiver vazia
-            } else {
-                document.getElementById('message-area').textContent = 'Por favor, digite algo para pesquisar.';
-                document.getElementById('news-results').innerHTML = ''; // Limpa os resultados se a busca for vazia
-                document.getElementById('current-category-heading').textContent = 'Últimas Notícias Mundiais'; // Restaura o título padrão
-            }
-        });
-
-        // Opcional: Permite que a busca seja acionada pressionando Enter no campo de texto
-        document.getElementById('search-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('search-button').click(); // Simula o clique no botão de busca
-            }
-        });
-
-        // Event listeners de fechar modal de resumo removidos
-
-        // Remove os event listeners de categoria, pois o menu foi removido.
-        // Se as categorias fossem reintroduzidas, esses listeners precisariam ser reativados.
-
-        // Carrega notícias iniciais (ex: "notícias mundiais") assim que a página é carregada
-        window.onload = () => {
-            fetchNews('notícias mundiais');
-        };
-    </script>
-</body>
-</html>
+            // Carrega notícias iniciais (ex: "notícias mundiais") assim que a página é carregada
+            window.onload = () => {
+                fetchNews('notícias mundiais');
+            };
+        </script>
+    </body>
+    </html>
+    

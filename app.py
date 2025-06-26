@@ -3,6 +3,10 @@ from flask import Flask, request, jsonify # Flask para criar o servidor web, req
 from flask_cors import CORS # Flask-CORS para lidar com políticas de Cross-Origin Resource Sharing (CORS)
 import requests # Para fazer requisições HTTP para APIs externas
 import os # Para interagir com o sistema operacional, como ler variáveis de ambiente
+from dotenv import load_dotenv # Importa load_dotenv para carregar variáveis do .env
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # Inicializa a aplicação Flask
 app = Flask(__name__)
@@ -12,20 +16,17 @@ app = Flask(__name__)
 # Ex: CORS(app, origins="http://seu-dominio.com")
 CORS(app)
 
-# --- Configuração da Chave API da SerpApi ---
-# É CRÍTICO armazenar chaves API como variáveis de ambiente, especialmente em produção.
-# Isso evita que sua chave seja exposta diretamente no código-fonte e em repositórios públicos.
-# O `os.environ.get()` tenta buscar a variável de ambiente `SERPAPI_API_KEY`.
-# O segundo argumento é um valor padrão caso a variável de ambiente não seja encontrada.
-# Este valor padrão é sua chave, incluída aqui para facilitar o teste local.
-SERPAPI_API_KEY = os.environ.get('SERPAPI_API_KEY', 'd84bc1abcf90136956eb186041bed1e9cb47bed87b4b6f92541a2db5cfc101c7')
+# --- Configuração da Chave API do NewsAPI.ai ---
+# A chave API deve ser armazenada como uma variável de ambiente por segurança.
+# O `os.environ.get()` tenta buscar a variável de ambiente `NEWSAPI_AI_API_KEY`.
+NEWSAPI_AI_API_KEY = os.environ.get('NEWSAPI_AI_API_KEY')
 
 # Verifica se a chave API foi definida e avisa se não.
-if not SERPAPI_API_KEY:
-    print("ERRO: A chave API da SerpApi não foi definida!")
-    print("Por favor, defina a variável de ambiente 'SERPAPI_API_KEY' ou edite 'app.py' com sua chave.")
-    print("Para definir no terminal (Linux/macOS): 'export SERPAPI_API_KEY=\"sua_chave_aqui\"'")
-    print("Ou use um arquivo .env e a biblioteca python-dotenv.")
+if not NEWSAPI_AI_API_KEY:
+    print("ERRO CRÍTICO: A chave API do NewsAPI.ai não foi definida!")
+    print("Certifique-se de que o arquivo '.env' existe na raiz do projeto e contém 'NEWSAPI_AI_API_KEY=sua_chave_aqui'.")
+    print("Ou defina a variável de ambiente NEWSAPI_AI_API_KEY no seu sistema.")
+    # Em um aplicativo real, você pode querer encerrar o programa aqui se a chave for essencial.
 
 # --- Rota para Buscar Notícias ---
 # Este endpoint '/api/news' será o ponto de comunicação para o seu frontend.
@@ -33,9 +34,9 @@ if not SERPAPI_API_KEY:
 @app.route('/api/news', methods=['GET'])
 def get_news():
     """
-    Endpoint para buscar notícias mundiais usando a SerpApi.
+    Endpoint para buscar notícias mundiais usando a NewsAPI.ai.
     Recebe o parâmetro 'query' da requisição GET do frontend.
-    Faz a chamada segura para a SerpApi e retorna os resultados JSON.
+    Faz a chamada segura para a NewsAPI.ai e retorna os resultados JSON.
     """
     # Obtém o valor do parâmetro 'query' da URL da requisição (ex: /api/news?query=guerra).
     # 'notícias mundiais' é um valor padrão se nenhum 'query' for fornecido.
@@ -45,39 +46,53 @@ def get_news():
     if not search_query:
         return jsonify({"error": "Parâmetro 'query' é obrigatório"}), 400
 
-    # Parâmetros que serão enviados na requisição para a SerpApi.
+    # Verifica novamente se a chave API está disponível antes de fazer a chamada
+    if not NEWSAPI_AI_API_KEY:
+        return jsonify({"error": "Erro de configuração do servidor: Chave API do NewsAPI.ai não encontrada."}), 500
+
+    # --- Parâmetros para a chamada da NewsAPI.ai ---
+    # Documentação da API: https://newsapi.ai/documentation
+    # Endpoint de busca: https://newsapi.ai/api/v1/search
     params = {
-        'api_key': SERPAPI_API_KEY, # Sua chave API
-        'engine': 'google_news',   # Especifica que queremos resultados do Google Notícias
-        'q': search_query,         # A string de busca fornecida pelo usuário
-        'hl': 'pt',                # Idioma dos resultados (Português)
-        'gl': 'br',                # Localização geográfica para os resultados (Brasil). Pode ser ajustado para global.
-        'num': 10                  # Número de resultados a serem retornados (máximo de 100 por requisição na SerpApi)
+        'apiKey': NEWSAPI_AI_API_KEY, # Sua chave API
+        'q': search_query,            # A string de busca fornecida pelo usuário
+        'language': 'pt',             # Idioma dos resultados (Português)
+        'country': 'br',              # País dos resultados (Brasil). NewsAPI.ai pode ser mais global por padrão dependendo do plano.
+        'articlesPage': 1,            # Página de artigos (1 é a primeira página)
+        'results': 10,                # Número de resultados por página
+        'sortBy': 'relevancy'         # Ordenar por relevância
     }
 
     try:
-        # Faz a requisição HTTP GET para o endpoint da SerpApi
-        response = requests.get('https://serpapi.com/search', params=params)
+        # Faz a requisição HTTP GET para o endpoint da NewsAPI.ai
+        response = requests.get('https://newsapi.ai/api/v1/search', params=params)
         # `raise_for_status()` verifica se a requisição foi bem-sucedida (status 2xx).
-        # Se não for, ele levanta uma exceção HTTPError.
         response.raise_for_status()
 
         # Converte o corpo da resposta JSON em um dicionário Python
         data = response.json()
-        print(f"DEBUG: Resposta bruta da SerpApi para a query '{search_query}': {data}") # Log para depuração
+        print(f"DEBUG: Resposta bruta do NewsAPI.ai para a query '{search_query}': {data}") # Log para depuração
 
-        # Verifica se o campo 'news_results' existe na resposta da SerpApi
-        if 'news_results' in data:
-            # Retorna apenas a lista de notícias (news_results) para o frontend.
-            # O status 200 indica sucesso.
-            return jsonify(data['news_results']), 200
+        # --- Processamento dos resultados para o formato esperado pelo frontend ---
+        processed_articles = []
+        if 'articles' in data and data['articles']:
+            for article in data['articles']:
+                # Mapeia os campos da NewsAPI.ai para os campos que o frontend espera
+                processed_articles.append({
+                    'title': article.get('title', 'Título não disponível'),
+                    'snippet': article.get('description', 'Descrição não disponível'),
+                    'link': article.get('url', '#'),
+                    'thumbnail': article.get('image', None), # NewsAPI.ai usa 'image' para thumbnail
+                    'source': article.get('source', {}).get('title', 'Fonte desconhecida'), # NewsAPI.ai tem 'source.title'
+                    'date': article.get('publishedAt', 'Data não disponível').split('T')[0] # Pega apenas a data
+                })
+            return jsonify(processed_articles), 200 # Retorna a lista de notícias processadas
         else:
-            # Se 'news_results' não for encontrado, informa que não há notícias ou a estrutura é inesperada.
-            return jsonify({"message": "Nenhuma notícia encontrada ou estrutura de resposta inesperada da SerpApi."}), 404
+            return jsonify({"message": "Nenhuma notícia encontrada ou estrutura de resposta inesperada do NewsAPI.ai."}), 404
 
     except requests.exceptions.RequestException as e:
         # Captura exceções relacionadas a problemas de rede, conexão, timeouts, etc.
-        print(f"ERRO: Erro ao chamar a SerpApi (conexão/HTTP): {e}")
+        print(f"ERRO: Erro ao chamar o NewsAPI.ai (conexão/HTTP): {e}")
         # Retorna uma mensagem de erro genérica para o frontend com status 500 (Erro Interno do Servidor).
         return jsonify({"error": f"Erro ao conectar com a API de notícias: {str(e)}"}), 500
     except Exception as e:
@@ -86,7 +101,7 @@ def get_news():
         return jsonify({"error": f"Erro interno do servidor: {str(e)}"}), 500
 
 # --- Execução da Aplicação Flask ---
-# Este bloco garante que o servidor Flask só seja executado quando o script é chamado diretamente.
+# Este bloco deve estar no nível superior de indentação (sem espaços à esquerda)
 if __name__ == '__main__':
     # `app.run()` inicia o servidor web Flask.
     # `debug=True`: Ativa o modo de depuração. Útil para desenvolvimento (recarrega o servidor ao salvar, exibe erros detalhados).
@@ -94,4 +109,4 @@ if __name__ == '__main__':
     # `host='0.0.0.0'`: Faz com que o servidor seja acessível de qualquer IP, não apenas do seu localhost.
     #                    Importante para cenários de deploy ou acesso de outras máquinas na mesma rede.
     # `port=5000`: Define a porta TCP/IP na qual o servidor irá escutar.
-    app.run(debug=False, host='0.0.0.0', port=5000) # Mude debug para False
+    app.run(debug=True, host='0.0.0.0', port=5000)
