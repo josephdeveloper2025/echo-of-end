@@ -149,7 +149,6 @@
                     }
                 } catch (error) {
                     console.error('Erro ao buscar notícias (Backend):', error);
-                    // Mensagem de erro mais detalhada para o usuário
                     document.getElementById('message-area').textContent = `Erro ao carregar notícias: ${error.message}. Isso pode ser um problema com a URL do backend, o serviço no Render não está ativo ou há um erro interno no backend. Por favor, verifique o console do navegador e os logs do Render.`;
                 }
             }
