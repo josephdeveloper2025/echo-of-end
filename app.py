@@ -27,23 +27,28 @@ if not THENEWSAPI_TOKEN:
 # --- Rota para Procurar Notícias ---
 @app.route('/api/news', methods=['GET'])
 def get_news():
-    search_query = request.args.get('query', 'notícias mundiais')
+    # Obtém o valor do parâmetro 'query' da URL da requisição.
+    # Se não for fornecido, a query será uma string vazia, o que fará a API retornar todas as notícias.
+    search_query = request.args.get('query', '') 
 
-    if not search_query:
-        return jsonify({"error": "Parâmetro 'query' é obrigatório"}), 400
+    # Se a query estiver vazia, não é um erro para puxar "todas" as notícias.
+    # Mas se houver uma query e ela for só espaços em branco, ainda é inválida.
+    if search_query and not search_query.strip():
+        return jsonify({"error": "Parâmetro 'query' não pode ser apenas espaços em branco."}), 400
 
     if not THENEWSAPI_TOKEN:
         return jsonify({"error": "Erro de configuração do servidor: Token API do theNewsAPI.com não encontrado no backend."}), 500
 
     # --- Parâmetros para a chamada do theNewsAPI.com ---
-    # Usaremos o endpoint 'all' para pesquisa geral.
-    # Documentação da API: https://www.thenewsapi.com/documentation
     params = {
         'api_token': THENEWSAPI_TOKEN,  # Seu token API
-        'search': search_query,         # A string de procura
         'language': 'pt',               # Idioma dos resultados (Português)
         'limit': 10                     # Número de resultados por página
     }
+
+    # Adiciona o parâmetro 'search' SOMENTE se search_query não estiver vazio
+    if search_query:
+        params['search'] = search_query
 
     try:
         thenewsapi_response = requests.get('https://api.thenewsapi.com/v1/news/all', params=params)
@@ -90,6 +95,5 @@ def get_news():
         print(f"ERRO: Erro inesperado no backend: {e}")
         return jsonify({"error": f"Erro interno do servidor: {str(e)}"}), 500
 
-# --- ESTE BLOCO DEVE ESTAR NO INÍCIO DA LINHA, SEM ESPAÇOS OU TABULAÇÕES ANTES DELE ---
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
