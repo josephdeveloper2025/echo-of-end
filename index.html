@@ -137,7 +137,7 @@
                         throw new Error(`Erro HTTP! ${errorDetails}.`);
                     }
                     const data = await response.json(); // Recebe a lista de notícias do backend
-                    console.log('Dados do Backend (NewsAPI.org via Flask):', data); // Log para depuração
+                    console.log('Dados do Backend (theNewsAPI.com via Flask):', data); // Log para depuração
 
                     // Verifica se há notícias e as exibe na tela
                     if (data && data.length > 0) {
